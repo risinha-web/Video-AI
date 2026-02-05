@@ -1,0 +1,8 @@
+# Evaluation Framework Dependencies
+# These are required to run the evaluation scripts
+
+# Core
+psutil>=5.9.0
+
+# Optional: for running the web interface template
+gradio>=4.0.0

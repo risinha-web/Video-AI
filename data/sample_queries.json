@@ -1,0 +1,73 @@
+{
+  "queries": [
+    {
+      "id": "q1",
+      "text": "rabbit or bunny",
+      "difficulty": "easy",
+      "category": "object"
+    },
+    {
+      "id": "q2",
+      "text": "character jumping or hopping",
+      "difficulty": "easy",
+      "category": "action"
+    },
+    {
+      "id": "q3",
+      "text": "green forest or trees",
+      "difficulty": "easy",
+      "category": "scene"
+    },
+    {
+      "id": "q4",
+      "text": "two characters interacting",
+      "difficulty": "medium",
+      "category": "interaction"
+    },
+    {
+      "id": "q5",
+      "text": "character eating or with food",
+      "difficulty": "medium",
+      "category": "action"
+    },
+    {
+      "id": "q6",
+      "text": "flying creature or bird in the sky",
+      "difficulty": "medium",
+      "category": "composite"
+    },
+    {
+      "id": "q7",
+      "text": "character looking angry or aggressive",
+      "difficulty": "hard",
+      "category": "emotion"
+    },
+    {
+      "id": "q8",
+      "text": "someone being chased or running away",
+      "difficulty": "hard",
+      "category": "narrative"
+    },
+    {
+      "id": "q9",
+      "text": "peaceful or calm moment",
+      "difficulty": "hard",
+      "category": "abstract"
+    },
+    {
+      "id": "q10",
+      "text": "comedic or funny scene",
+      "difficulty": "hard",
+      "category": "abstract"
+    }
+  ],
+  "metadata": {
+    "description": "Sample queries for Big Buck Bunny video",
+    "total_queries": 10,
+    "difficulty_distribution": {
+      "easy": 3,
+      "medium": 3,
+      "hard": 4
+    }
+  }
+}
