@@ -1,208 +1,48 @@
 {
-  "video_id": "big_buck_bunny",
-  "video_path": "data/big_buck_bunny.mp4",
-  "duration_ms": 596000,
+  "video_id": "example_video",
+  "video_path": "data/test_video.mp4",
+  "duration_ms": 120000,
   "fps": 24,
   "annotations": [
     {
-      "query": "rabbit or bunny",
+      "query": "a person walking",
       "matches": [
         {
-          "start_ms": 35000,
-          "end_ms": 45000,
-          "description": "Big Buck Bunny first appears, waking up"
+          "start_ms": 5000,
+          "end_ms": 10000,
+          "description": "Person walks across the frame from left to right"
         },
         {
-          "start_ms": 55000,
-          "end_ms": 75000,
-          "description": "Bunny walking through the forest"
-        },
-        {
-          "start_ms": 120000,
-          "end_ms": 140000,
-          "description": "Bunny interacting with butterfly"
-        },
-        {
-          "start_ms": 250000,
-          "end_ms": 280000,
-          "description": "Bunny discovers the rodents' mischief"
-        },
-        {
-          "start_ms": 400000,
-          "end_ms": 450000,
-          "description": "Bunny preparing revenge"
+          "start_ms": 45000,
+          "end_ms": 52000,
+          "description": "Person walking down a hallway"
         }
       ]
     },
     {
-      "query": "character jumping or hopping",
+      "query": "outdoor scene with trees or nature",
       "matches": [
         {
-          "start_ms": 60000,
-          "end_ms": 65000,
-          "description": "Bunny hops through meadow"
-        },
-        {
-          "start_ms": 480000,
-          "end_ms": 490000,
-          "description": "Rodents jumping to escape"
+          "start_ms": 15000,
+          "end_ms": 25000,
+          "description": "Wide shot of a park with trees"
         }
       ]
     },
     {
-      "query": "green forest or trees",
+      "query": "two people talking to each other",
       "matches": [
         {
-          "start_ms": 10000,
-          "end_ms": 30000,
-          "description": "Opening forest establishing shots"
-        },
-        {
-          "start_ms": 50000,
-          "end_ms": 80000,
-          "description": "Forest scenes with bunny"
-        },
-        {
-          "start_ms": 150000,
-          "end_ms": 180000,
-          "description": "Dense forest background"
-        }
-      ]
-    },
-    {
-      "query": "two characters interacting",
-      "matches": [
-        {
-          "start_ms": 115000,
-          "end_ms": 130000,
-          "description": "Bunny with butterfly"
-        },
-        {
-          "start_ms": 200000,
-          "end_ms": 230000,
-          "description": "Rodents plotting together"
-        },
-        {
-          "start_ms": 300000,
-          "end_ms": 330000,
-          "description": "Rodents attacking bunny's friend"
-        }
-      ]
-    },
-    {
-      "query": "character eating or with food",
-      "matches": [
-        {
-          "start_ms": 85000,
-          "end_ms": 95000,
-          "description": "Bunny with apple"
-        },
-        {
-          "start_ms": 220000,
-          "end_ms": 235000,
-          "description": "Rodents with stolen food"
-        }
-      ]
-    },
-    {
-      "query": "flying creature or bird in the sky",
-      "matches": [
-        {
-          "start_ms": 20000,
-          "end_ms": 28000,
-          "description": "Birds in opening scene"
-        },
-        {
-          "start_ms": 110000,
-          "end_ms": 135000,
-          "description": "Butterfly flying sequence"
-        },
-        {
-          "start_ms": 500000,
-          "end_ms": 520000,
-          "description": "Flying squirrel sequence"
-        }
-      ]
-    },
-    {
-      "query": "character looking angry or aggressive",
-      "matches": [
-        {
-          "start_ms": 260000,
-          "end_ms": 280000,
-          "description": "Bunny discovers the damage, gets angry"
-        },
-        {
-          "start_ms": 350000,
-          "end_ms": 380000,
-          "description": "Bunny's determined revenge face"
-        },
-        {
-          "start_ms": 190000,
-          "end_ms": 210000,
-          "description": "Rodents with mischievous expressions"
-        }
-      ]
-    },
-    {
-      "query": "someone being chased or running away",
-      "matches": [
-        {
-          "start_ms": 450000,
-          "end_ms": 500000,
-          "description": "Rodents fleeing from bunny's traps"
-        },
-        {
-          "start_ms": 530000,
-          "end_ms": 560000,
-          "description": "Final chase sequence"
-        }
-      ]
-    },
-    {
-      "query": "peaceful or calm moment",
-      "matches": [
-        {
-          "start_ms": 35000,
-          "end_ms": 50000,
-          "description": "Bunny peacefully waking up"
-        },
-        {
-          "start_ms": 100000,
-          "end_ms": 120000,
-          "description": "Serene nature moments"
-        },
-        {
-          "start_ms": 580000,
-          "end_ms": 596000,
-          "description": "Peaceful ending"
-        }
-      ]
-    },
-    {
-      "query": "comedic or funny scene",
-      "matches": [
-        {
-          "start_ms": 460000,
-          "end_ms": 490000,
-          "description": "Slapstick with rodents and traps"
-        },
-        {
-          "start_ms": 510000,
-          "end_ms": 540000,
-          "description": "Comedic revenge payoff"
-        },
-        {
-          "start_ms": 240000,
-          "end_ms": 260000,
-          "description": "Rodents' exaggerated reactions"
+          "start_ms": 30000,
+          "end_ms": 40000,
+          "description": "Two people in conversation"
         }
       ]
     }
   ],
   "metadata": {
-    "annotator": "sample",
-    "notes": "Approximate timestamps for Big Buck Bunny (2008). Adjust based on your video version.",
-    "source": "https://peach.blender.org/"
+    "annotator": "example",
+    "notes": "This is an example ground truth file. Replace with annotations for your chosen test video.",
+    "source": "https://archive.org/"
   }
 }

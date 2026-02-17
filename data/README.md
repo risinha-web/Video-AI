@@ -4,52 +4,50 @@ This directory contains test data for evaluating your video search implementatio
 
 ## Obtaining Test Videos
 
-Since we cannot distribute copyrighted content, you'll need to download or create test videos. Here are recommended sources:
+Since we cannot distribute copyrighted content, you'll need to download test videos yourself. Use any video that is **1–10 minutes** long.
 
-### Option 1: Big Buck Bunny (Recommended for Testing)
+### Recommended: Internet Archive
 
-An open-source animated short film perfect for testing:
+The [Internet Archive](https://archive.org/) hosts thousands of free, public domain videos. Browse and pick any video that interests you:
+
+- [Archive.org Video Collection](https://archive.org/details/movies) — films, clips, animations, documentaries
+- [Prelinger Archives](https://archive.org/details/prelinger) — historical/educational films
+- [Open Source Movies](https://archive.org/details/opensource_movies) — community-contributed content
+
+To download, find a video you like, click the MP4 download link, and save it to this directory:
 
 ```bash
-# Download 1080p version (~150MB)
-wget https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4 -O data/big_buck_bunny.mp4
-
-# Or download higher quality
-wget https://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_1080p_h264.mov -O data/big_buck_bunny_1080p.mov
+# Example: download a video from archive.org
+wget "https://archive.org/download/<video-id>/<filename>.mp4" -O data/test_video.mp4
 ```
 
-### Option 2: Free Stock Footage
+> **Tip:** Choose a video with diverse visual content (people, objects, actions, scenes) — this will give you better signal when testing different query types.
 
-Download from these royalty-free sources:
-- [Pexels Videos](https://www.pexels.com/videos/)
-- [Pixabay Videos](https://pixabay.com/videos/)
-- [Coverr](https://coverr.co/)
+### Alternative Sources
 
-### Option 3: Your Own Videos
-
-You can use any video files you have. Recommended specifications:
-- Format: MP4, MOV, AVI
-- Resolution: 720p or 1080p
-- Duration: 1-10 minutes for testing
+- [Pexels Videos](https://www.pexels.com/videos/) — royalty-free stock footage
+- [Pixabay Videos](https://pixabay.com/videos/) — royalty-free clips
+- [Coverr](https://coverr.co/) — free stock video
+- Your own videos
 
 ## Directory Structure
 
 ```
 data/
 ├── README.md                 # This file
-├── sample_queries.json       # Test queries for evaluation
+├── sample_queries.json       # Example test queries
 └── ground_truth/
-    └── sample_labels.json    # Annotations for Big Buck Bunny
+    └── sample_labels.json    # Example ground truth format
 ```
 
 ## Creating Ground Truth
 
-If using your own videos, create ground truth annotations in this format:
+Create ground truth annotations for your chosen video in this format:
 
 ```json
 {
   "video_id": "your_video",
-  "video_path": "data/your_video.mp4",
+  "video_path": "data/test_video.mp4",
   "duration_ms": 120000,
   "annotations": [
     {
@@ -66,12 +64,16 @@ If using your own videos, create ground truth annotations in this format:
 }
 ```
 
+See `ground_truth/sample_labels.json` for a complete example.
+
 ## Sample Queries
 
-The `sample_queries.json` file contains test queries at different difficulty levels:
+The `sample_queries.json` file contains example queries at different difficulty levels:
 - **Easy**: Simple objects and actions
 - **Medium**: Combinations of attributes and actions
 - **Hard**: Complex scenes, emotions, or abstract concepts
+
+You should adapt or create queries that are relevant to the video you choose.
 
 ## Video Requirements
 

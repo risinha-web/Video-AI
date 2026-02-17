@@ -89,12 +89,11 @@ pip install -r submission/requirements.txt
 
 ### 2. Get Test Videos
 
-See [data/README.md](data/README.md) for instructions. Quick start:
+Download any video (1–10 minutes) from the [Internet Archive](https://archive.org/) — it has thousands of free, public domain videos. See [data/README.md](data/README.md) for suggestions.
 
 ```bash
-# Download Big Buck Bunny (open source test video)
-wget https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4 \
-    -O data/big_buck_bunny.mp4
+# Example: download a video from archive.org
+wget "https://archive.org/download/<video-id>/<filename>.mp4" -O data/test_video.mp4
 ```
 
 ### 3. Implement Your Solution
@@ -127,7 +126,7 @@ python -m evaluation.evaluate --check-interface
 # Run evaluation
 python -m evaluation.evaluate \
     --submission ./submission \
-    --video ./data/big_buck_bunny.mp4 \
+    --video ./data/test_video.mp4 \
     --queries ./data/sample_queries.json \
     --ground-truth ./data/ground_truth/sample_labels.json
 
@@ -160,7 +159,7 @@ You can run the full evaluation locally:
 ```bash
 python -m evaluation.evaluate \
     --submission ./submission \
-    --video ./data/big_buck_bunny.mp4 \
+    --video ./data/test_video.mp4 \
     --queries ./data/sample_queries.json \
     --ground-truth ./data/ground_truth/sample_labels.json
 ```

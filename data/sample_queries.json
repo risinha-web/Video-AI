@@ -2,67 +2,68 @@
   "queries": [
     {
       "id": "q1",
-      "text": "rabbit or bunny",
-      "difficulty": "easy",
-      "category": "object"
-    },
-    {
-      "id": "q2",
-      "text": "character jumping or hopping",
+      "text": "a person walking",
       "difficulty": "easy",
       "category": "action"
     },
     {
+      "id": "q2",
+      "text": "a car or vehicle",
+      "difficulty": "easy",
+      "category": "object"
+    },
+    {
       "id": "q3",
-      "text": "green forest or trees",
+      "text": "outdoor scene with trees or nature",
       "difficulty": "easy",
       "category": "scene"
     },
     {
       "id": "q4",
-      "text": "two characters interacting",
+      "text": "two people talking to each other",
       "difficulty": "medium",
       "category": "interaction"
     },
     {
       "id": "q5",
-      "text": "character eating or with food",
+      "text": "someone holding or picking up an object",
       "difficulty": "medium",
       "category": "action"
     },
     {
       "id": "q6",
-      "text": "flying creature or bird in the sky",
+      "text": "a crowded or busy scene",
       "difficulty": "medium",
       "category": "composite"
     },
     {
       "id": "q7",
-      "text": "character looking angry or aggressive",
+      "text": "someone looking surprised or excited",
       "difficulty": "hard",
       "category": "emotion"
     },
     {
       "id": "q8",
-      "text": "someone being chased or running away",
+      "text": "a dramatic or tense moment",
       "difficulty": "hard",
       "category": "narrative"
     },
     {
       "id": "q9",
-      "text": "peaceful or calm moment",
+      "text": "a peaceful or quiet scene",
       "difficulty": "hard",
       "category": "abstract"
     },
     {
       "id": "q10",
-      "text": "comedic or funny scene",
+      "text": "something funny or unexpected happening",
       "difficulty": "hard",
       "category": "abstract"
     }
   ],
   "metadata": {
-    "description": "Sample queries for Big Buck Bunny video",
+    "description": "Sample queries for video search evaluation",
+    "note": "Adapt these queries to match the content of your chosen test video",
     "total_queries": 10,
     "difficulty_distribution": {
       "easy": 3,

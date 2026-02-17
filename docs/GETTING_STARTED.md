@@ -50,12 +50,13 @@ pip install -r requirements.txt
 pip install -r submission/requirements.txt
 ```
 
-### 4. Download Test Video
+### 4. Download a Test Video
+
+Download any video (1–10 minutes) from the [Internet Archive](https://archive.org/). See [../data/README.md](../data/README.md) for suggestions.
 
 ```bash
-# Big Buck Bunny - open source animated short
-wget https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4 \
-    -O data/big_buck_bunny.mp4
+# Example: download a video from archive.org
+wget "https://archive.org/download/<video-id>/<filename>.mp4" -O data/test_video.mp4
 ```
 
 ### 5. Verify Setup
@@ -186,7 +187,7 @@ python -m evaluation.evaluate --check-interface
 # Run against sample data
 python -m evaluation.evaluate \
     --submission ./submission \
-    --video ./data/big_buck_bunny.mp4 \
+    --video ./data/test_video.mp4 \
     --queries ./data/sample_queries.json \
     --quick
 ```

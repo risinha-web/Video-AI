@@ -181,7 +181,7 @@ Note: Automated evaluation covers 70% of the score. Manual review adds 20%.
 # Full evaluation
 python -m evaluation.evaluate \
     --submission ./submission \
-    --video ./data/big_buck_bunny.mp4 \
+    --video ./data/test_video.mp4 \
     --queries ./data/sample_queries.json \
     --ground-truth ./data/ground_truth/sample_labels.json \
     --output report.json
@@ -189,14 +189,14 @@ python -m evaluation.evaluate \
 # Quick evaluation (subset of queries)
 python -m evaluation.evaluate \
     --submission ./submission \
-    --video ./data/big_buck_bunny.mp4 \
+    --video ./data/test_video.mp4 \
     --queries ./data/sample_queries.json \
     --quick
 
 # Generate markdown report
 python -m evaluation.evaluate \
     --submission ./submission \
-    --video ./data/big_buck_bunny.mp4 \
+    --video ./data/test_video.mp4 \
     --queries ./data/sample_queries.json \
     --ground-truth ./data/ground_truth/sample_labels.json \
     --output report.md \
