@@ -87,7 +87,12 @@ See [EVALUATION.md](../EVALUATION.md) for detailed scoring criteria.
 
 When you're done:
 1. Ensure all tests pass locally
-2. Commit and push to your repository
-3. GitHub Classroom will run automated tests
+2. Commit and push to your private repository
+3. Add `vlt-ai` as a collaborator so we can review:
+   ```bash
+   gh repo edit --add-collaborator vlt-ai
+   ```
+   Or go to your repo → Settings → Collaborators → Add `vlt-ai`
+4. Send your repo link to your recruiter
 
 Good luck!

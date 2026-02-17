@@ -12,11 +12,19 @@ This guide walks you through setting up your development environment and underst
 
 ## Setup
 
-### 1. Clone Your Repository
+### 1. Set Up Your Private Repository
 
 ```bash
-git clone <your-assignment-repo-url>
-cd ai-interview
+# Clone the assignment
+git clone https://github.com/vlt-ai/ai-interview-assignment.git
+cd ai-interview-assignment
+
+# Create a PRIVATE repo on your GitHub (do NOT fork — forks of public repos are public)
+gh repo create ai-interview --private
+
+# Point to your private repo and push
+git remote set-url origin https://github.com/<your-github-username>/ai-interview.git
+git push -u origin master
 ```
 
 ### 2. Create Virtual Environment

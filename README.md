@@ -51,13 +51,31 @@ Create a video search system that:
 
 ## Getting Started
 
-### 1. Set Up Environment
+### 1. Set Up Your Private Repository
+
+To keep your solution private from other candidates:
 
 ```bash
-# Clone your assignment repository
-git clone <your-repo-url>
-cd ai-interview
+# Clone this repository
+git clone https://github.com/vlt-ai/ai-interview-assignment.git
+cd ai-interview-assignment
 
+# Create a new PRIVATE repository on your GitHub account
+# (do NOT fork — forks of public repos are public)
+gh repo create ai-interview --private
+
+# Change the remote to point to your private repo
+git remote set-url origin https://github.com/<your-github-username>/ai-interview.git
+
+# Push the assignment to your private repo
+git push -u origin master
+```
+
+> **Important:** Do not fork this repository. Forks of public repos are always public, meaning other candidates could see your work. Use the clone-and-push method above instead.
+
+### 2. Set Up Environment
+
+```bash
 # Create virtual environment
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -135,12 +153,17 @@ You may add additional files and modules as needed.
 
 ## Evaluation
 
-### Automated Testing (GitHub Classroom)
+### Automated Testing
 
-When you push, automated tests will:
-1. Check interface compliance
-2. Run sample evaluation
-3. Report scores
+You can run the full evaluation locally:
+
+```bash
+python -m evaluation.evaluate \
+    --submission ./submission \
+    --video ./data/big_buck_bunny.mp4 \
+    --queries ./data/sample_queries.json \
+    --ground-truth ./data/ground_truth/sample_labels.json
+```
 
 ### Metrics
 
@@ -182,6 +205,21 @@ This is designed as a weekend project (1-2 days of focused work).
 - [API Contract Documentation](docs/API_CONTRACT.md)
 - [Getting Started Guide](docs/GETTING_STARTED.md)
 - [Evaluation Details](EVALUATION.md)
+
+---
+
+## Submitting Your Work
+
+When you're finished:
+
+1. Ensure all tests pass locally
+2. Push your final code to your **private** repository
+3. Add `vlt-ai` as a collaborator so we can review your work:
+   ```bash
+   gh repo edit --add-collaborator vlt-ai
+   ```
+   Or: repo **Settings** → **Collaborators** → Add **vlt-ai**
+4. Send your repo link to your recruiter
 
 ---
 
