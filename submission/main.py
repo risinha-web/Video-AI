@@ -41,7 +41,6 @@ class VideoSearch(VideoSearchInterface):
     SAMPLE_INTERVAL_SECONDS = 1.0  # one frame per second
     BATCH_SIZE = 64                 # frames per CLIP inference call
     MIN_RESULT_GAP_MS = 1000       # minimum gap between returned results (ms)
-    SMOOTH_WINDOW = 3               # temporal smoothing window over frame scores
 
     def __init__(self):
         """Load CLIP model and initialise state."""
@@ -92,18 +91,12 @@ class VideoSearch(VideoSearchInterface):
     def _embed_text(self, text: str) -> np.ndarray:
         """Return L2-normalised text embedding for a query string.
 
-        Ensembles multiple prompt templates and averages the embeddings.
-        CLIP was trained on image-caption pairs that follow natural description
-        patterns; prompt engineering significantly improves hard/abstract queries.
+        Uses the "a photo of X" prompt template, which matches CLIP's training
+        distribution and improves matching on hard/abstract queries.
         """
-        templates = [
-            "a photo of {}",
-            "a video frame showing {}",
-            "{}",
-        ]
-        prompts = [t.format(text) for t in templates]
+        prompt = f"a photo of {text}"
         inputs = self.processor(
-            text=prompts, return_tensors="pt", padding=True, truncation=True
+            text=[prompt], return_tensors="pt", padding=True, truncation=True
         )
         input_ids = inputs["input_ids"].to(self.device)
         attention_mask = inputs["attention_mask"].to(self.device)
@@ -113,10 +106,7 @@ class VideoSearch(VideoSearchInterface):
             )
             feats = self.model.text_projection(text_out.pooler_output)
             feats = feats / feats.norm(dim=-1, keepdim=True)
-        # Average template embeddings and re-normalise
-        avg = feats.mean(dim=0)
-        avg = avg / avg.norm()
-        return avg.cpu().float().numpy()
+        return feats.cpu().float().numpy()[0]
 
     def _memory_mb(self) -> float:
         """Return current process RSS in MB."""
@@ -259,12 +249,6 @@ class VideoSearch(VideoSearchInterface):
         # (embeddings are already L2-normalised, so dot product == cosine similarity)
         query_vec = self._embed_text(query.strip())     # [512]
         sims = self.embeddings @ query_vec              # [N], range ≈ [-1, 1]
-
-        # Temporal smoothing: average each frame's score with its neighbours.
-        # This helps recall when a scene spans multiple frames with uneven scores.
-        if len(sims) >= self.SMOOTH_WINDOW:
-            kernel = np.ones(self.SMOOTH_WINDOW) / self.SMOOTH_WINDOW
-            sims = np.convolve(sims, kernel, mode="same")
 
         sorted_idxs = np.argsort(sims)[::-1]
 
