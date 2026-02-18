@@ -40,7 +40,7 @@ class VideoSearch(VideoSearchInterface):
     MODEL_NAME = "openai/clip-vit-base-patch32"
     SAMPLE_INTERVAL_SECONDS = 1.0  # one frame per second
     BATCH_SIZE = 64                 # frames per CLIP inference call
-    MIN_RESULT_GAP_MS = 1000       # minimum gap between returned results (ms)
+    MIN_RESULT_GAP_MS = 2000       # minimum gap between returned results (ms)
 
     def __init__(self):
         """Load CLIP model and initialise state."""
@@ -89,14 +89,9 @@ class VideoSearch(VideoSearchInterface):
         return feats.cpu().float().numpy()
 
     def _embed_text(self, text: str) -> np.ndarray:
-        """Return L2-normalised text embedding for a query string.
-
-        Uses the "a photo of X" prompt template, which matches CLIP's training
-        distribution and improves matching on hard/abstract queries.
-        """
-        prompt = f"a photo of {text}"
+        """Return L2-normalised text embedding for a query string."""
         inputs = self.processor(
-            text=[prompt], return_tensors="pt", padding=True, truncation=True
+            text=[text], return_tensors="pt", padding=True, truncation=True
         )
         input_ids = inputs["input_ids"].to(self.device)
         attention_mask = inputs["attention_mask"].to(self.device)
