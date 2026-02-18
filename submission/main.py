@@ -1,15 +1,26 @@
 """
-Video Search Implementation
+Video Search Implementation using CLIP for multimodal scene search.
 
-This is the main entry point for your solution. You must implement the
-VideoSearch class that inherits from VideoSearchInterface.
-
-See the API documentation in docs/API_CONTRACT.md for details.
+Approach:
+  - Model: OpenAI CLIP ViT-B/32 via HuggingFace Transformers
+  - Indexing: sample 1 frame/second, encode with CLIP vision encoder in batches
+  - Search: encode text query with CLIP text encoder, rank frames by cosine similarity
+  - Deduplication: non-maximum suppression with a 2-second minimum gap between results
 """
 
-from typing import List
+import os
 import sys
+import time
+import tempfile
 from pathlib import Path
+from typing import List, Optional
+
+import cv2
+import numpy as np
+import psutil
+import torch
+from PIL import Image
+from transformers import CLIPModel, CLIPProcessor
 
 # Add parent directory to path for evaluation imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -19,135 +30,247 @@ from evaluation.interface import VideoSearchInterface, SearchResult
 
 class VideoSearch(VideoSearchInterface):
     """
-    Your video search implementation.
+    CLIP-based video search.
 
-    TODO: Implement the following methods:
-    - load_video(): Load and preprocess a video
-    - search(): Find scenes matching a natural language query
-    - get_processing_stats(): Return performance statistics
-
-    You may add any additional methods, classes, or modules as needed.
+    Frames are sampled at 1 FPS, embedded with CLIP's vision encoder,
+    and stored as normalised vectors for fast cosine-similarity search
+    against natural-language text queries.
     """
 
-    def __init__(self):
-        """Initialize your video search system.
+    MODEL_NAME = "openai/clip-vit-base-patch32"
+    SAMPLE_INTERVAL_SECONDS = 1.0  # one frame per second
+    BATCH_SIZE = 32                 # frames per CLIP inference call
+    MIN_RESULT_GAP_MS = 2000       # minimum gap between returned results (ms)
 
-        TODO: Initialize your model(s), set up any data structures, etc.
-        """
-        self.video_path = None
-        self.frames = []
+    def __init__(self):
+        """Load CLIP model and initialise state."""
+        self.video_path: Optional[str] = None
+        self.video_fps: float = 0.0
+        self.frame_numbers: List[int] = []
+        self.timestamps_ms: List[int] = []
+        self.embeddings: Optional[np.ndarray] = None  # shape [N, 512]
+        self.thumbnail_dir: Optional[str] = None
+
         self.stats = {
             "fps": 0.0,
             "memory_mb": 0.0,
             "model_info": {},
             "index_time_seconds": 0.0,
             "total_frames": 0,
+            "sampled_frames": 0,
         }
 
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.processor = CLIPProcessor.from_pretrained(self.MODEL_NAME)
+        self.model = CLIPModel.from_pretrained(self.MODEL_NAME).to(self.device)
+        self.model.eval()
+
+        self.stats["model_info"] = {
+            "name": "CLIP",
+            "version": "ViT-B/32",
+            "embedding_dim": 512,
+            "device": self.device,
+        }
+
+    # ------------------------------------------------------------------
+    # Private helpers
+    # ------------------------------------------------------------------
+
+    def _embed_images(self, images: List[Image.Image]) -> np.ndarray:
+        """Return L2-normalised image embeddings for a batch of PIL images."""
+        inputs = self.processor(images=images, return_tensors="pt", padding=True)
+        inputs = {k: v.to(self.device) for k, v in inputs.items()}
+        with torch.no_grad():
+            feats = self.model.get_image_features(**inputs)
+            feats = feats / feats.norm(dim=-1, keepdim=True)
+        return feats.cpu().float().numpy()
+
+    def _embed_text(self, text: str) -> np.ndarray:
+        """Return L2-normalised text embedding for a query string."""
+        inputs = self.processor(
+            text=[text], return_tensors="pt", padding=True, truncation=True
+        )
+        inputs = {k: v.to(self.device) for k, v in inputs.items()}
+        with torch.no_grad():
+            feats = self.model.get_text_features(**inputs)
+            feats = feats / feats.norm(dim=-1, keepdim=True)
+        return feats.cpu().float().numpy()[0]
+
+    def _memory_mb(self) -> float:
+        """Return current process RSS in MB."""
+        return psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024)
+
+    # ------------------------------------------------------------------
+    # VideoSearchInterface implementation
+    # ------------------------------------------------------------------
+
     def load_video(self, video_path: str) -> None:
-        """Load and optionally preprocess a video.
+        """Load, sample, and index a video file.
 
-        TODO: Implement video loading and preprocessing.
-
-        This is where you should:
-        1. Load the video file
-        2. Extract frames (all or sampled)
-        3. Generate embeddings or features for each frame
-        4. Build any index structures for efficient search
+        Samples one frame per second, encodes each through CLIP's vision
+        encoder (in batches of BATCH_SIZE), and stores the resulting
+        normalised embeddings for later search.
 
         Args:
-            video_path: Path to the video file.
+            video_path: Path to the video file (mp4, avi, mov, etc.)
 
         Raises:
-            FileNotFoundError: If video doesn't exist.
-            ValueError: If video format is not supported.
+            FileNotFoundError: If the video file does not exist.
+            ValueError: If the file cannot be opened as a video.
         """
-        # Example structure (replace with your implementation):
-        #
-        # import cv2
-        # import time
-        #
-        # if not Path(video_path).exists():
-        #     raise FileNotFoundError(f"Video not found: {video_path}")
-        #
-        # start_time = time.time()
-        # cap = cv2.VideoCapture(video_path)
-        #
-        # # Extract frames
-        # while cap.isOpened():
-        #     ret, frame = cap.read()
-        #     if not ret:
-        #         break
-        #     self.frames.append(frame)
-        #
-        # cap.release()
-        #
-        # # Generate embeddings using your chosen model
-        # self.embeddings = self.model.encode(self.frames)
-        #
-        # self.stats["index_time_seconds"] = time.time() - start_time
-        # self.stats["total_frames"] = len(self.frames)
-        # self.stats["fps"] = len(self.frames) / self.stats["index_time_seconds"]
+        if not Path(video_path).exists():
+            raise FileNotFoundError(f"Video not found: {video_path}")
 
-        raise NotImplementedError("TODO: Implement load_video()")
+        start_time = time.time()
+
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            raise ValueError(f"Cannot open video file: {video_path}")
+
+        self.video_fps = cap.get(cv2.CAP_PROP_FPS) or 24.0
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        # How many raw frames to skip between samples
+        sample_every = max(1, int(round(self.video_fps * self.SAMPLE_INTERVAL_SECONDS)))
+
+        # Temp directory persists between searches so thumbnails remain valid
+        self.thumbnail_dir = tempfile.mkdtemp(prefix="video_search_")
+
+        # Reset index state
+        self.frame_numbers = []
+        self.timestamps_ms = []
+        embeddings_list: List[np.ndarray] = []
+
+        batch_images: List[Image.Image] = []
+        batch_frame_idxs: List[int] = []
+
+        frame_idx = 0
+        while True:
+            # grab() advances the capture without decoding — much faster than read()
+            ret = cap.grab()
+            if not ret:
+                break
+
+            if frame_idx % sample_every == 0:
+                ret, bgr = cap.retrieve()
+                if not ret:
+                    frame_idx += 1
+                    continue
+
+                rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+                pil = Image.fromarray(rgb)
+
+                # Save a small thumbnail for the UI
+                thumb = pil.copy()
+                thumb.thumbnail((320, 240), Image.LANCZOS)
+                thumb_path = os.path.join(
+                    self.thumbnail_dir, f"frame_{frame_idx:07d}.jpg"
+                )
+                thumb.save(thumb_path, quality=75, optimize=True)
+
+                batch_images.append(pil)
+                batch_frame_idxs.append(frame_idx)
+
+                # Flush batch when full
+                if len(batch_images) == self.BATCH_SIZE:
+                    embeddings_list.append(self._embed_images(batch_images))
+                    for fi in batch_frame_idxs:
+                        self.frame_numbers.append(fi)
+                        self.timestamps_ms.append(int(fi * 1000 / self.video_fps))
+                    batch_images = []
+                    batch_frame_idxs = []
+
+            frame_idx += 1
+
+        # Flush remaining partial batch
+        if batch_images:
+            embeddings_list.append(self._embed_images(batch_images))
+            for fi in batch_frame_idxs:
+                self.frame_numbers.append(fi)
+                self.timestamps_ms.append(int(fi * 1000 / self.video_fps))
+
+        cap.release()
+
+        self.embeddings = (
+            np.vstack(embeddings_list) if embeddings_list else np.empty((0, 512))
+        )
+        self.video_path = video_path
+
+        elapsed = time.time() - start_time
+        sampled = len(self.frame_numbers)
+
+        self.stats.update(
+            {
+                "fps": sampled / elapsed if elapsed > 0 else 0.0,
+                "memory_mb": self._memory_mb(),
+                "index_time_seconds": elapsed,
+                "total_frames": total_frames,
+                "sampled_frames": sampled,
+            }
+        )
 
     def search(self, query: str, top_k: int = 10) -> List[SearchResult]:
-        """Search for scenes matching the natural language query.
+        """Search the indexed video for scenes matching the query.
 
-        TODO: Implement the search functionality.
-
-        This is where you should:
-        1. Encode the query using your model
-        2. Compare against frame embeddings
-        3. Return the top-k most relevant results
+        Encodes the query with CLIP's text encoder and ranks all indexed
+        frames by cosine similarity. Applies non-maximum suppression so
+        returned results are spread at least MIN_RESULT_GAP_MS apart.
 
         Args:
-            query: Natural language description (e.g., "person wearing red dress")
+            query: Natural language description of the scene to find.
             top_k: Maximum number of results to return.
 
         Returns:
-            List of SearchResult objects sorted by confidence (descending).
+            List of SearchResult sorted by confidence (descending).
 
         Raises:
-            RuntimeError: If load_video() hasn't been called yet.
+            RuntimeError: If load_video() has not been called.
+            ValueError: If the query is empty.
         """
-        # Example structure (replace with your implementation):
-        #
-        # if self.video_path is None:
-        #     raise RuntimeError("Must call load_video() before search()")
-        #
-        # # Encode query
-        # query_embedding = self.model.encode_text(query)
-        #
-        # # Calculate similarities
-        # similarities = cosine_similarity(query_embedding, self.embeddings)
-        #
-        # # Get top-k results
-        # top_indices = similarities.argsort()[-top_k:][::-1]
-        #
-        # results = []
-        # for idx in top_indices:
-        #     results.append(SearchResult(
-        #         timestamp_ms=self._frame_to_ms(idx),
-        #         confidence=float(similarities[idx]),
-        #         frame_number=idx,
-        #         thumbnail_path=None,  # Optionally save and return thumbnail
-        #     ))
-        #
-        # return results
+        if self.video_path is None:
+            raise RuntimeError("Call load_video() before search().")
+        if not query.strip():
+            raise ValueError("Query cannot be empty.")
+        if self.embeddings is None or len(self.embeddings) == 0:
+            return []
 
-        raise NotImplementedError("TODO: Implement search()")
+        # Encode query and compute cosine similarity against all frame embeddings
+        # (embeddings are already L2-normalised, so dot product == cosine similarity)
+        query_vec = self._embed_text(query.strip())     # [512]
+        sims = self.embeddings @ query_vec              # [N], range ≈ [-1, 1]
+
+        sorted_idxs = np.argsort(sims)[::-1]
+
+        results: List[SearchResult] = []
+        used_ts: List[int] = []
+
+        for idx in sorted_idxs:
+            if len(results) >= top_k:
+                break
+
+            ts = self.timestamps_ms[idx]
+
+            # Non-maximum suppression: skip frames too close to an accepted result
+            if any(abs(ts - u) < self.MIN_RESULT_GAP_MS for u in used_ts):
+                continue
+
+            # Clip cosine similarity to [0, 1] for the confidence field
+            confidence = float(np.clip(sims[idx], 0.0, 1.0))
+
+            thumb_path = os.path.join(
+                self.thumbnail_dir, f"frame_{self.frame_numbers[idx]:07d}.jpg"
+            )
+            results.append(
+                SearchResult(
+                    timestamp_ms=ts,
+                    confidence=confidence,
+                    frame_number=self.frame_numbers[idx],
+                    thumbnail_path=thumb_path if os.path.exists(thumb_path) else None,
+                )
+            )
+            used_ts.append(ts)
+
+        return results
 
     def get_processing_stats(self) -> dict:
-        """Return statistics about processing performance.
-
-        TODO: Implement to return actual statistics from your implementation.
-
-        Returns:
-            Dictionary with at minimum:
-            - fps: Frames processed per second
-            - memory_mb: Peak memory usage in megabytes
-            - model_info: Dict with model details
-        """
-        # Return your actual statistics here
+        """Return performance statistics populated during load_video()."""
         return self.stats
