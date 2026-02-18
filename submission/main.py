@@ -39,8 +39,9 @@ class VideoSearch(VideoSearchInterface):
 
     MODEL_NAME = "openai/clip-vit-base-patch32"
     SAMPLE_INTERVAL_SECONDS = 1.0  # one frame per second
-    BATCH_SIZE = 32                 # frames per CLIP inference call
-    MIN_RESULT_GAP_MS = 2000       # minimum gap between returned results (ms)
+    BATCH_SIZE = 64                 # frames per CLIP inference call
+    MIN_RESULT_GAP_MS = 1000       # minimum gap between returned results (ms)
+    SMOOTH_WINDOW = 3               # temporal smoothing window over frame scores
 
     def __init__(self):
         """Load CLIP model and initialise state."""
@@ -64,6 +65,8 @@ class VideoSearch(VideoSearchInterface):
         self.processor = CLIPProcessor.from_pretrained(self.MODEL_NAME)
         self.model = CLIPModel.from_pretrained(self.MODEL_NAME).to(self.device)
         self.model.eval()
+        if self.device == "cuda":
+            self.model = self.model.half()  # fp16 on GPU for ~2x throughput
 
         self.stats["model_info"] = {
             "name": "CLIP",
@@ -87,9 +90,20 @@ class VideoSearch(VideoSearchInterface):
         return feats.cpu().float().numpy()
 
     def _embed_text(self, text: str) -> np.ndarray:
-        """Return L2-normalised text embedding for a query string."""
+        """Return L2-normalised text embedding for a query string.
+
+        Ensembles multiple prompt templates and averages the embeddings.
+        CLIP was trained on image-caption pairs that follow natural description
+        patterns; prompt engineering significantly improves hard/abstract queries.
+        """
+        templates = [
+            "a photo of {}",
+            "a video frame showing {}",
+            "{}",
+        ]
+        prompts = [t.format(text) for t in templates]
         inputs = self.processor(
-            text=[text], return_tensors="pt", padding=True, truncation=True
+            text=prompts, return_tensors="pt", padding=True, truncation=True
         )
         input_ids = inputs["input_ids"].to(self.device)
         attention_mask = inputs["attention_mask"].to(self.device)
@@ -99,7 +113,10 @@ class VideoSearch(VideoSearchInterface):
             )
             feats = self.model.text_projection(text_out.pooler_output)
             feats = feats / feats.norm(dim=-1, keepdim=True)
-        return feats.cpu().float().numpy()[0]
+        # Average template embeddings and re-normalise
+        avg = feats.mean(dim=0)
+        avg = avg / avg.norm()
+        return avg.cpu().float().numpy()
 
     def _memory_mb(self) -> float:
         """Return current process RSS in MB."""
@@ -242,6 +259,12 @@ class VideoSearch(VideoSearchInterface):
         # (embeddings are already L2-normalised, so dot product == cosine similarity)
         query_vec = self._embed_text(query.strip())     # [512]
         sims = self.embeddings @ query_vec              # [N], range ≈ [-1, 1]
+
+        # Temporal smoothing: average each frame's score with its neighbours.
+        # This helps recall when a scene spans multiple frames with uneven scores.
+        if len(sims) >= self.SMOOTH_WINDOW:
+            kernel = np.ones(self.SMOOTH_WINDOW) / self.SMOOTH_WINDOW
+            sims = np.convolve(sims, kernel, mode="same")
 
         sorted_idxs = np.argsort(sims)[::-1]
 
