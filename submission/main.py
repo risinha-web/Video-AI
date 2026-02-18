@@ -79,9 +79,10 @@ class VideoSearch(VideoSearchInterface):
     def _embed_images(self, images: List[Image.Image]) -> np.ndarray:
         """Return L2-normalised image embeddings for a batch of PIL images."""
         inputs = self.processor(images=images, return_tensors="pt", padding=True)
-        inputs = {k: v.to(self.device) for k, v in inputs.items()}
+        pixel_values = inputs["pixel_values"].to(self.device)
         with torch.no_grad():
-            feats = self.model.get_image_features(**inputs)
+            vision_out = self.model.vision_model(pixel_values=pixel_values)
+            feats = self.model.visual_projection(vision_out.pooler_output)
             feats = feats / feats.norm(dim=-1, keepdim=True)
         return feats.cpu().float().numpy()
 
@@ -90,9 +91,13 @@ class VideoSearch(VideoSearchInterface):
         inputs = self.processor(
             text=[text], return_tensors="pt", padding=True, truncation=True
         )
-        inputs = {k: v.to(self.device) for k, v in inputs.items()}
+        input_ids = inputs["input_ids"].to(self.device)
+        attention_mask = inputs["attention_mask"].to(self.device)
         with torch.no_grad():
-            feats = self.model.get_text_features(**inputs)
+            text_out = self.model.text_model(
+                input_ids=input_ids, attention_mask=attention_mask
+            )
+            feats = self.model.text_projection(text_out.pooler_output)
             feats = feats / feats.norm(dim=-1, keepdim=True)
         return feats.cpu().float().numpy()[0]
 
